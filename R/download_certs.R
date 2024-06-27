@@ -101,3 +101,29 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
     warning(paste("Could not access the Zenodo API. Skipping retrieving cert", cert_id))
   }
 }
+
+get_abstract <- function(register_repo, url_prefix = "https://doi.org/") {
+  config_yml <- get_codecheck_yml(register[i, ]$Repo)
+  paper_link <- config_yml$paper$reference
+  doi <- gsub(url_prefix, "", paper_link)
+
+  # Construct the URL to access the CrossRef API
+  url <- paste0("https://api.crossref.org/works/", doi)
+  
+  # Make the HTTP GET request
+  response <- GET(url)
+  
+  # Check if the request was successful
+  if (status_code(response) == 200) {
+    data <- content(response, "parsed")
+    
+    # Retrieve the abstract from the response data, if available
+    if (!is.null(data$message$abstract)) {
+      return(data$message$abstract)
+    } 
+    return(paste("No abstract available for DOI", doi))
+  } 
+  else {
+    return(paste("Failed to retrieve data for DOI", doi))
+  }
+}

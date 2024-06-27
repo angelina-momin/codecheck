@@ -5,7 +5,14 @@ create_cert_pages <- function(register, cert_dir = "docs/certs/"){
   html_template <- readLines(html_template_path)
 
   # Loop over each cert in the register table
-  for (cert in list_certs){
+  for (i in 1:nrow(register)){
+    # Retrieving report link and cert id
+    report_link <- register[i, ]$Report
+    cert_id <- register[i, ]$Certificate
+
+    # Retrieve the abstract
+    abstract <- get_abstract(register[i, ]$Repo)
+
     # Download the file
     cert_dir <- "docs/certs/"
     download_cert(report_link, cert_id, cert_dir)
