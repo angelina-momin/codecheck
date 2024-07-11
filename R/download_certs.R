@@ -1,7 +1,7 @@
 library(httr)
 library(jsonlite)
 
-download_cert <- function(report_link, cert_id, cert_dir = "docs/certs/"){
+download_cert <- function(report_link, cert_id, cert_dir){
   # Obtaining the pdf download link from the report link
   if (grepl("zenodo", report_link)){
     cert_download_url <- get_zenodo_cert_link(report_link, cert_id) 
@@ -11,8 +11,6 @@ download_cert <- function(report_link, cert_id, cert_dir = "docs/certs/"){
     cert_download_url <- get_osf_cert_link(report_link, cert_id)
   }
 
-  # Adding the cert id as a folder name. 
-  cert_dir <- paste0(cert_dir, cert_id, "/")
   # Checking if the certs dir exist
   if (!dir.exists(cert_dir)){
     dir.create(cert_dir)
