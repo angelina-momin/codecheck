@@ -1,26 +1,18 @@
 library(httr)
 library(jsonlite)
 
-download_cert <- function(report_link, cert_id, cert_dir){
+download_cert_pdf <- function(report_link, cert_id){
   # Obtaining the pdf download link from the report link
-  if (grepl("zenodo", report_link)){
-    cert_download_url <- get_zenodo_cert_link(report_link, cert_id) 
-  }
-
-  else if (grepl("OSF", report_link, ignore.case = FALSE)) {
-    cert_download_url <- get_osf_cert_link(report_link, cert_id)
-  }
+  cert_download_url <- get_cert_link(report_link)
 
   # Checking if the certs dir exist
-  if (!dir.exists(cert_dir)){
-    dir.create(cert_dir)
-  }
-
-  pdf_path <- paste0(cert_dir, "cert.pdf") 
+  cert_pdf_dir <- CONFIG$DIR[["certs_pdf"]]
+  pdf_path <- paste0(cert_id, "cert.pdf") 
 
   # Download the PDF file
   download_response <- GET(cert_download_url, write_disk(pdf_path, overwrite = TRUE))
 
+  # Throwing warning messages
   if (status_code(download_response) == 200) {
       message(paste("Cert", cert_id, "downloaded successfully"))
   } 
@@ -31,17 +23,29 @@ download_cert <- function(report_link, cert_id, cert_dir){
   }
 }
 
-get_osf_cert_link <- function(report_link, cert_id){
-  # Set the base URL for the OSF API
-  base_url <- "https://api.osf.io/v2/"
+get_cert_link <- function(report_link){
+  if (grepl("zenodo", report_link)){
+    cert_download_url <- get_zenodo_cert_link(report_link, cert_id) 
+  }
 
+  else if (grepl("OSF", report_link, ignore.case = FALSE)) {
+    cert_download_url <- get_osf_cert_link(report_link, cert_id)
+  }
+
+  return(cert_download_url)
+}
+
+CONFIG$CERT_LINKS = list(
+  osf = "https://api.osf.io/v2/",
+  zenodo = "https://zenodo.org/api/records/"
+)
+
+get_osf_cert_link <- function(report_link, cert_id){
   # Retrieve the osf_project_id 
   node_id <- basename(report_link)
 
-  # Prepare the API endpoint to access files for a specific node
-  files_url <- paste0(base_url, "nodes/", node_id, "/files/osfstorage/")
-
-  # Make the API request
+  # Prepare the API endpoint to access files for a specific node and make the request
+  files_url <- paste0(CONFIG$CERT_LINKS[["osf"]], "nodes/", node_id, "/files/osfstorage/")
   response <- GET(files_url)
 
   # Check if the request was successful
@@ -69,9 +73,8 @@ get_osf_cert_link <- function(report_link, cert_id){
 
 get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   # Set the base URL for the Zenodo API
-  base_url <- "https://zenodo.org/api/records/"
   record_id <- gsub("zenodo.", "", basename(report_link))
-  record_url <- paste0(base_url, record_id, "/files")
+  record_url <- paste0(CONFIG$CERT_LINKS[["zenodo"]], record_id, "/files")
   
   # Make the API request
   response <- GET(record_url, add_headers(Authorization = paste("Bearer", api_key)))

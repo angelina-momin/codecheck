@@ -1,8 +1,12 @@
-create_cert_pages <- function(register, cert_dir = "docs/certs/"){
+CONFIG$DIR <- list(
+  cert_page = "docs/template_cert_page.html",
+  cert_pdf = "docs/certs"
+)
+
+create_cert_pages <- function(register, force_download = FALSE){
 
   # Read template
-  html_template_path <- "docs/template_cert_page.html"  # Adjust path as necessary
-  html_template <- readLines(html_template_path)
+  html_template <- readLines(CONFIG$DIR[[cert_page]])
 
   # Loop over each cert in the register table
   for (i in 1:nrow(register)){
@@ -10,20 +14,22 @@ create_cert_pages <- function(register, cert_dir = "docs/certs/"){
     report_link <- register[i, ]$Report
     cert_id <- register[i, ]$Certificate
 
+    # Define paths for the certificate PDF and JPEG
+    pdf_path <- file.path(CONFIG$DIR[["cert_pdf"]], paste0(cert_id, ".pdf"))
+    pdf_exists <- file.exists(pdf_path)
+    
+    # Download the PDF if it doesn't exist or if force_download is TRUE
+    if (!pdf_exists || force_download) {
+      download_cert_pdf(report_link, cert_id)
+      convert_cert_pdf_to_jpeg(cert_id)
+    }
+
     # Retrieve the abstract
     abstract <- get_abstract(register[i, ]$Repo)
 
-    # Download the file
-    cert_dir <- paste0("docs/certs/", cert_id, "/")
-    download_cert(report_link, cert_id, cert_dir)
-
-    # Convert the pdf cert to series of jpeg images
-    convert_pdf_cert_jpeg(cert_dir)
-
-    img_tag <- sprintf('<img src="%s" alt="Description">', image_path)
-
     # Add the image tag into the placeholder
-    html_file_path <- paste0(cert_dir, "index.html")
+    img_tag <- sprintf('<img src="%s" alt="Description">', image_path)
+    html_file_path <- paste0(cert_pdf_dir, "index.html")
     html_file <- gsub("<!--placeholder-for-images-->", img_tag, html_template)
 
     # Write the updated HTML to a file
@@ -31,11 +37,15 @@ create_cert_pages <- function(register, cert_dir = "docs/certs/"){
   }
 }
 
-convert_pdf_cert_jpeg <- function(cert_dir){
+convert_cert_pdf_to_jpeg <- function(cert_id){
+
+  # Checking if the certs dir exist
+  cert_pdf_dir <- CONFIG$DIR[["certs_pdf"]]
+  pdf_path <- paste0(cert_id, "cert.pdf") 
+
   # Get the number of pages in the PDF
   cert_pdf_path <- paste0(cert_dir, "cert.pdf")
-  pdf_info <- pdf_info(cert_pdf_path)
-  num_pages <- pdf_info$pages
+  num_pages <- pdf_info(cert_pdf_path)$pages
 
   # Create image filenames
   image_filenames <- sapply(1:num_pages, function(page) paste0(cert_dir, "cert_", page, ".png"))
