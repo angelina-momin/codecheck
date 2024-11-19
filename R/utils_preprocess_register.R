@@ -254,8 +254,8 @@ preprocess_register <- function(register, filter_by) {
       create_temp_register_with_codechecker(register_table)
     }
     register_table <- add_cert_links(register_table)
-    register_table <- add_venue_type_links(register_table)
     register_table <- add_venue_links(register_table)
+    register_table <- add_venue_type_links(register_table)
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
