@@ -11,6 +11,43 @@ register_clear_cache <- function() {
   unlink(path, recursive = TRUE)
 }
 
+add_venue_links <- function(register_table){
+  list_hyperlinks <- c()
+  venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
+
+  # Looping over the entries in the register
+  for (i in seq_len(nrow(register_table))) {
+    venue_name <- register_table[i, ]$Venue
+    
+    # Generating the venue slug for the hyperlink
+    venue_slug <- gsub(" ", "_", stringr::str_to_lower(venue_name))
+    venue_hyperlink <- paste0("(", venue_name,")",venue_hyperlink_base, venue_slug, "]")
+    list_hyperlinks <- c(list_hyperlinks, venue_hyperlink)
+  }
+
+  # Replace the "Venue" column with the hyperlinks
+  register_table$Venue <- list_hyperlinks
+  return(register_table)
+}
+
+add_venue_type_links <- function(register_table){
+  list_hyperlinks <- c()
+  venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
+
+  # Looping over the entries in the register
+  for (i in seq_len(nrow(register_table))) {
+    venue_type <- register_table[i, ]$Type
+    venue_type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]]
+    
+    venue_type_hyperlink <- paste0("(", venue_type, ")[", venue_hyperlink_base, venue_type_plural, "]")
+    list_hyperlinks <- c(list_hyperlinks, venue_type_hyperlink)
+  }
+
+  # Replace the "Type" column with the hyperlinks
+  register_table$Type <- list_hyperlinks
+  return(register_table)
+}
+
 #' Function for adding clickable links to the paper for each entry in the register table.
 #' 
 #' @param register_table The register table
@@ -205,6 +242,8 @@ preprocess_register <- function(register, filter_by) {
       create_temp_register_with_codechecker(register_table)
     }
     register_table <- add_cert_links(register_table)
+    register_table <- add_venue_type_links(register_table)
+    register_table <- add_venue_links(register_table)
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
