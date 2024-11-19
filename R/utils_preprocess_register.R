@@ -11,6 +11,10 @@ register_clear_cache <- function() {
   unlink(path, recursive = TRUE)
 }
 
+#' Function for adding clickable links to the codecheck venue pages for each entry in the register table.
+#' 
+#' @param register_table The register table
+#' @return The adjusted register table
 add_venue_links <- function(register_table){
   list_hyperlinks <- c()
   venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
@@ -18,10 +22,14 @@ add_venue_links <- function(register_table){
   # Looping over the entries in the register
   for (i in seq_len(nrow(register_table))) {
     venue_name <- register_table[i, ]$Venue
+
+    # Retrieving the venue type which is needed for url construction
+    venue_type <- register_table[i, ]$Type
+    venue_type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]]
     
     # Generating the venue slug for the hyperlink
     venue_slug <- gsub(" ", "_", stringr::str_to_lower(venue_name))
-    venue_hyperlink <- paste0("(", venue_name,")",venue_hyperlink_base, venue_slug, "]")
+    venue_hyperlink <- paste0("[", venue_name,"](",venue_hyperlink_base, venue_type_plural, "/", venue_slug, ")")
     list_hyperlinks <- c(list_hyperlinks, venue_hyperlink)
   }
 
@@ -30,6 +38,10 @@ add_venue_links <- function(register_table){
   return(register_table)
 }
 
+#' Function for adding clickable links to the codecheck venue type pages for each entry in the register table.
+#' 
+#' @param register_table The register table
+#' @return The adjusted register table
 add_venue_type_links <- function(register_table){
   list_hyperlinks <- c()
   venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
@@ -39,7 +51,7 @@ add_venue_type_links <- function(register_table){
     venue_type <- register_table[i, ]$Type
     venue_type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]]
     
-    venue_type_hyperlink <- paste0("(", venue_type, ")[", venue_hyperlink_base, venue_type_plural, "]")
+    venue_type_hyperlink <- paste0("[", venue_type, "](", venue_hyperlink_base, venue_type_plural, ")")
     list_hyperlinks <- c(list_hyperlinks, venue_type_hyperlink)
   }
 
