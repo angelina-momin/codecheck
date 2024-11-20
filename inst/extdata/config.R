@@ -248,3 +248,7 @@ CONFIG$JSON_COLUMNS <- c(
   "Paper reference",
   "Check date"
 )
+
+CONFIG$REGEX <- c(
+  hyperlink_text = "\\[(.*?)\\].*"
+)

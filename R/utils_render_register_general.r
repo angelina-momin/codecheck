@@ -65,7 +65,7 @@ create_register_files <- function(register_table, filter_by, outputs){
         # For venues we need to extract the venue name from the key 
         # since the keys are hyperlinks
         if (filter == "venues"){
-          register_key <- sub("\\[(.*?)\\].*", "\\1", register_key)
+          register_key <- sub(CONFIG$REGEX[["hyperlink_text"]], "\\1", register_key)
         }
 
         filtered_table <- filtered_register_list[[i]]
