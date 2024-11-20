@@ -61,6 +61,13 @@ create_register_files <- function(register_table, filter_by, outputs){
       for (i in seq_along(filtered_register_list)) {
         # Retrieving the register and its key
         register_key <- register_keys[[filter_col_name]][i]
+
+        # For venues we need to extract the venue name from the key 
+        # since the keys are hyperlinks
+        if (filter == "venues"){
+          register_key <- sub("\\[(.*?)\\].*", "\\1", register_key)
+        }
+
         filtered_table <- filtered_register_list[[i]]
 
         table_details <- generate_table_details(register_key, filtered_table, filter)
@@ -129,7 +136,14 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
   # Checking if the filter has a subcategory
   if (filter %in% names(CONFIG$FILTER_SUBCAT_COLUMNS)){
     subcat_col <- CONFIG$FILTER_SUBCAT_COLUMNS[[filter]]
-    table_details[["subcat"]] <- table[[subcat_col]][1]
+    subcat <- table[[subcat_col]][1]
+
+    # Since the subcat is a hyperlink we need to extract only the subcat name
+    if (filter == "venues"){
+      subcat <- sub("\\[(.*?)\\].*", "\\1", subcat)
+    }
+
+    table_details[["subcat"]] <- subcat
   }
 
   # Generating the output dir once here instead of multiple times
