@@ -22,28 +22,62 @@ add_repository_links_json <- function(register_table) {
   return(register_table)
 }
 
-#' Set "Title" and "Paper reference" columns and values to the register_table
-#' 
-#' @param register_table The register table
-#' @return Updated register table including "Title" and "Paper reference" columns
-set_paper_title_references <- function(register_table){
+#' Updates columns in a register table with extracted data without any hyperlinks
+#' For "Type" and "Venue" it retrieve the text from the hyperlinks.
+#'
+#' @param register_table A data frame containing rows with repository details.
+#' @return Updated register table with updated "Certificate", "Title", "Paper reference", "Type" and "Vene" columns
+set_columns_json <- function(register_table){
+  cert_ids <- c()
   titles <- c()
   references <- c()
-  for (i in seq_len(nrow(register_table))) {
-    config_yml <- get_codecheck_yml(register_table[i, ]$Repository)
+  venue_types <- c()
+  venues <- c()
 
-    title <- NA
-    reference <- NA
-    if (!is.null(config_yml)) {
-      title <- config_yml$paper$title
-      reference <- config_yml$paper$reference
+  # Looping through each row in the register table and retrieving
+  # the entry details
+  for (i in seq_len(nrow(register_table))){
+    register_table_row <- register_table[i, ]
+    config_yml <- get_codecheck_yml(register_table_row$Repository)
+
+    cert_id <- config_yml$certificate
+    cert_ids <- c(cert_ids, cert_id)
+
+    title <- config_yml$paper$title
+    titles <- c(titles, title)
+
+    reference <- config_yml$paper$reference
+    references <- c(references, reference)
+
+    # Checking if the table has "Venue" column and if so, retireve venue name
+    if ("Venue" %in% colnames(register_table)){
+      venue_hyperlink <- register_table_row$Venue
+      venue <- sub(CONFIG$REGEX[["hyperlink_text"]], "\\1", venue_hyperlink)
+      
+      venues <- c(venues, venue)
     }
 
-    titles <- c(titles, title)
-    references <- c(references, reference)
+    # Checking if the table has "Type" column and if so, retireve venue type
+    if ("Type" %in% colnames(register_table)){
+      venue_type_hyperlink <- register_table_row$Type
+      venue_type <- sub(CONFIG$REGEX[["hyperlink_text"]], "\\1", venue_type_hyperlink)
+      
+      venue_types <- c(venue_types, venue_type)
+    }
   }
+
+  # Setting the columns with the adjusted data
+  register_table$Certificate <- cert_ids
   register_table$Title <- stringr::str_trim(titles)
   register_table$`Paper reference` <- stringr::str_trim(references)
+
+  if ("Type" %in% names(register_table)){
+    register_table$Type <- venue_types
+  }
+
+  if ("Venue" %in% names(register_table)){
+    register_table$Venue <- venues
+  }
 
   return(register_table)
 }
@@ -57,7 +91,7 @@ render_register_json <- function(register_table, table_details, filter) {
   register_table <- add_repository_links_json(register_table)
 
   # Set paper titles and references
-  register_table <- set_paper_title_references(register_table)
+  register_table <- set_columns_json(register_table)
 
   output_dir <- table_details[["output_dir"]]
 
